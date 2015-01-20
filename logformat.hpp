@@ -21,23 +21,25 @@ namespace logformat {
 
 // if param is an object of user class type, call its to_string member function
 template<typename T>
-std::enable_if_t<
-             std::is_class<T>::value &&
-             std::is_member_function_pointer<decltype(&T::to_string)>::value,
-             std::string
-         >
-to_string_helper(T p) {
+auto to_string_helper(T p)
+	-> decltype(p.to_string(), std::string())
+{
 	return p.to_string();
 }
 
 template<typename T>
-auto to_string_helper(T p) ->
-std::enable_if_t<
-             !std::is_class<T>::value,
-             std::string
-         >
+auto to_string_helper(T p)
+	-> decltype(std::to_string(p), std::string())
 {
 	using std::to_string;
+	return to_string(p);
+}
+
+
+template<typename T>
+auto to_string_helper(T p)
+	-> decltype(to_string(p), std::string())
+{
 	return to_string(p);
 }
 

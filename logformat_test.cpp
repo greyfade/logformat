@@ -22,7 +22,7 @@ TEST_CASE( "string conversion tests", "[param_to_string]" ) {
 
 	REQUIRE( param_to_string(test_t()) == std::string("test_t") );
 
-	//REQUIRE( param_to_string(test_no_member_t()) == std::string("test_no_member_t") );
+	REQUIRE( param_to_string(test_no_member_t()) == std::string("test_no_member_t") );
 
 }
 
