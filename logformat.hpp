@@ -10,6 +10,7 @@
 
 #include <iosfwd>
 #include <string>
+#include <type_traits>
 
 #ifndef NO_THREADING
 #include <thread>
@@ -18,10 +19,39 @@
 
 namespace logformat {
 
+// if param is an object of user class type, call its to_string member function
 template<typename T>
-std::string param_to_string(T p);
+std::enable_if_t<
+             std::is_class<T>::value &&
+             std::is_member_function_pointer<decltype(&T::to_string)>::value,
+             std::string
+         >
+to_string_helper(T p) {
+	return p.to_string();
+}
+
+template<typename T>
+auto to_string_helper(T p) ->
+std::enable_if_t<
+             !std::is_class<T>::value,
+             std::string
+         >
+{
+	using std::to_string;
+	return to_string(p);
+}
+
+
+template<typename T>
+std::string param_to_string(T p) {
+	return to_string_helper(p);
+}
 
 // pass through strings
+template<>
+std::string param_to_string(const char* p) {
+	return std::string(p);
+}
 template<>
 std::string param_to_string(std::string&& p) {
 	return std::move(p);
@@ -30,27 +60,7 @@ template<>
 std::string param_to_string(const std::string& p) {
 	return p;
 }
-template<>
-std::string param_to_string(const char* p) {
-	return std::string(p);
-}
 
-// if param is an object of user class type, call its to_string member function
-template<typename T>
-std::string param_to_string(typename std::enable_if<
-										 std::is_member_function_pointer<
-										   decltype(&T::to_string)
-										 >::value
-										, const T&
-									>::type p) {
-	return p.to_string();
-}
-
-template<typename T>
-std::string param_to_string(T p) {
-	using std::to_string;
-	return to_string(p);
-}
 
 template<typename ... Rest>
 std::string format(const char* text, Rest... args) {
