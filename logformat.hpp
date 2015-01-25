@@ -20,23 +20,45 @@
 namespace logformat {
 
 namespace {
-// if param is an object of user class type, call its to_string member function
+// some sfinae tools
 template<typename T>
-auto to_string_helper(T p)
-	-> decltype(p.to_string(), std::string())
-{
+using is_defined = std::true_type;
+
+template<typename T>
+auto has_mem_to_string(int) -> decltype(is_defined<decltype(std::declval<T&>().to_string())>());
+
+template<typename T>
+auto has_mem_to_string(long) -> std::false_type;
+
+template<typename T>
+auto has_to_string(int) -> decltype(is_defined<decltype(to_string(std::declval<T&>()))>());
+
+template<typename T>
+auto has_to_string(long) -> std::false_type;
+
+// if param is an object of user class type, call its to_string member function
+template<typename T,
+         typename std::enable_if<decltype(has_mem_to_string<T>(0))::value>::type* = nullptr>
+std::string to_string_helper(T p) {
 	return p.to_string();
 }
 
-// importing to_string because GCC won't do overloads on functions
-// existing in different namespaces.
-using std::to_string;
-template<typename T>
-auto to_string_helper(T p)
-	-> decltype(to_string(p), std::string())
-{
+// if param has a free to_string() overload
+template<typename T,
+         typename std::enable_if<!decltype(has_mem_to_string<T>(0))::value &&
+                                  decltype(has_to_string<T>(0))::value>::type* = nullptr>
+std::string to_string_helper(T p) {
 	return to_string(p);
 }
+
+// if param has a std::to_string() overload
+template<typename T,
+         typename std::enable_if<!decltype(has_mem_to_string<T>(0))::value &&
+                                 !decltype(has_to_string<T>(0))::value>::type* = nullptr>
+std::string to_string_helper(T p) {
+	return std::to_string(p);
+}
+
 }
 
 
