@@ -82,6 +82,13 @@ std::string param_to_string(const std::string& p) {
 }
 
 
+template<typename ... Rest>
+std::string format(const char* text, Rest... args);
+template<typename ... Rest>
+std::string format(const std::string& text, Rest... args);
+template<typename T1, typename ... Rest>
+std::string format(std::string&& text, const T1& p1, Rest... args);
+
 std::string format(std::string&& text) {
 	std::string::size_type n = 0;
 	while((n = text.rfind("%%", n)) != std::string::npos) {
@@ -90,23 +97,13 @@ std::string format(std::string&& text) {
 	return std::move(text);
 }
 
-template<typename ... Rest>
-std::string format(const char* text, Rest... args) {
-	std::string buffer(text);
-	return format(std::move(buffer), args...);
-}
-template<typename ... Rest>
-std::string format(const std::string& text, Rest... args) {
-	std::string buffer(text);
-	return format(std::move(buffer), args...);
-}
 template<typename T1, typename ... Rest>
 std::string format(std::string&& text, const T1& p1, Rest... args) {
 	std::string::size_type n = 0;
 	std::string::size_type p1_pos = std::string::npos;
 	std::string::size_type p1_len = std::string::npos;
 	int lowest_ref = 100;
-	while((n = text.find("%", n)) != std::string::npos) {
+	while((n = text.find('%', n)) != std::string::npos) {
 		// first digit of reference
 		int ref = text[n+1] - '0';
 		if(ref > 0 && ref <= 9) {
@@ -121,11 +118,23 @@ std::string format(std::string&& text, const T1& p1, Rest... args) {
 				p1_len = (ref > 9 ? 3 : 2);
 			}
 		}
+		++n;
 	}
 	if(p1_pos != std::string::npos) {
 		text.replace(p1_pos, p1_len, param_to_string(p1));
 	}
-	return format(text, args...);
+	return format(std::move(text), args...);
+}
+
+template<typename ... Rest>
+std::string format(const char* text, Rest... args) {
+	std::string buffer(text);
+	return format(std::move(buffer), args...);
+}
+template<typename ... Rest>
+std::string format(const std::string& text, Rest... args) {
+	std::string buffer(text);
+	return format(std::move(buffer), args...);
 }
 
 struct log_target_t {
