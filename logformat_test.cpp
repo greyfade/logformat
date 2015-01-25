@@ -26,4 +26,9 @@ TEST_CASE( "string conversion tests", "[param_to_string]" ) {
 
 }
 
+TEST_CASE( "format string interpolation tests", "[format]" ) {
+	REQUIRE( format("no interpolation") == std::string("no interpolation") );
+
+}
+
 // vim: syntax=cpp11:sts=4:ts=4:sw=4:noet

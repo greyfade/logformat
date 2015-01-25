@@ -82,6 +82,14 @@ std::string param_to_string(const std::string& p) {
 }
 
 
+std::string format(std::string&& text) {
+	std::string::size_type n = 0;
+	while((n = text.rfind("%%", n)) != std::string::npos) {
+		text.erase(n, 1);
+	}
+	return std::move(text);
+}
+
 template<typename ... Rest>
 std::string format(const char* text, Rest... args) {
 	std::string buffer(text);
@@ -118,14 +126,6 @@ std::string format(std::string&& text, const T1& p1, Rest... args) {
 		text.replace(p1_pos, p1_len, param_to_string(p1));
 	}
 	return format(text, args...);
-}
-
-std::string format(std::string&& text) {
-	std::string::size_type n = 0;
-	while((n = text.rfind("%%", n)) != std::string::npos) {
-		text.erase(n, 1);
-	}
-	return std::move(text);
 }
 
 struct log_target_t {
